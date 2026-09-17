@@ -1,0 +1,62 @@
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+.envrc
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Python virtual environments and generated files
+.venv/
+.tmp/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Local databases, SQLite journals, and runtime data
+instance/
+data/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+backups/
+backup/
+*.bak
+*.backup
+exports/
+*.log
+logs/
+
+# Build output and optional Node dependencies
+node_modules/
+dist/
+build/
+
+# Editor and OS temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini

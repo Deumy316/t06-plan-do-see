@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="heading"><div><p class="eyebrow">PLAN · 나의 방향</p><h1>계획</h1><p class="muted">시작할 일과 성공의 기준을 정해 보세요.</p></div><a class="button" href="{{ url_for('new_plan') }}">+ 새 계획</a></div>
+<h2 class="section-title">저장된 계획 <span class="count">{{ plans|length }}</span></h2>
+{% if plans %}<div class="cards">{% for plan in plans %}
+<a class="card plan-card" href="{{ url_for('detail', plan_id=plan.id) }}"><div class="card-top"><span class="badge {{ plan.priority }}">우선순위 {{ priorities[plan.priority] }}</span><span class="muted">버전 {{ plan.version }}</span></div><h3>{{ plan.title }}</h3><p class="excerpt">{{ plan.content or '내용 없음' }}</p><dl class="card-meta"><div><dt>기간</dt><dd><time>{{ plan.start_date }}</time> — <time>{{ plan.end_date }}</time></dd></div><div><dt>예상 시간</dt><dd>{{ plan.estimated_minutes }}분</dd></div></dl><div class="card-bottom">{{ plan.updated_at|seoul }} 저장 <span>상세 보기 →</span></div></a>
+{% endfor %}</div>{% else %}<div class="card empty"><p class="eyebrow">아직 비어 있는 계획 노트</p><h2>첫 계획을 담아 보세요</h2><p class="muted">작은 계획도 좋아요. 예상 시간과 성공 기준을 함께 남겨 보세요.</p><a class="button" href="{{ url_for('new_plan') }}">+ 첫 계획 만들기</a></div>{% endif %}
+{% endblock %}

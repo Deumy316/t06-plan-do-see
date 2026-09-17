@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% macro fields(item) %}
+<dl class="details"><div class="wide"><dt>내용</dt><dd class="prose">{{ item.content or '입력하지 않음' }}</dd></div><div><dt>기간</dt><dd>{{ item.start_date }} — {{ item.end_date }}</dd></div><div><dt>우선순위</dt><dd>{{ priorities[item.priority] }}</dd></div><div><dt>예상 시간</dt><dd>{{ item.estimated_minutes }}분</dd></div><div><dt>최초 생성 시각</dt><dd>{{ item.created_at|seoul }}</dd></div><div class="wide"><dt>성공 기준</dt><dd class="prose">{{ item.success_criteria or '입력하지 않음' }}</dd></div><div class="wide"><dt>이 버전 저장 시각</dt><dd>{{ item.updated_at|seoul }}</dd></div></dl>
+{% endmacro %}
+{% block title %}계획 상세{% endblock %}
+{% block body %}
+<a class="back" href="{{ url_for('index') }}">← 계획 목록</a>
+<div class="save-success" role="status" data-save-result hidden>계획을 저장했습니다. 아래에서 저장된 내용과 수정 이력을 확인하세요.</div>
+<div class="heading"><div><p class="eyebrow">PLAN · 계획 상세</p><h1>{{ plan.title }}</h1><p class="muted">현재 버전 {{ plan.version }} · {{ plan.updated_at|seoul }} 저장</p></div><a class="button" href="{{ url_for('edit_plan', plan_id=plan.id) }}">계획 수정</a></div>
+<div class="detail-layout">
+<section class="card plan-body" aria-label="계획 내용"><h2>계획의 내용</h2><p class="prose">{{ plan.content or '입력한 내용이 없습니다.' }}</p><div class="content-divider"></div><h2>성공 기준</h2><p class="prose">{{ plan.success_criteria or '입력한 성공 기준이 없습니다.' }}</p></section>
+<aside class="card plan-facts" aria-label="계획 주요 정보"><span class="badge {{ plan.priority }}">우선순위 {{ priorities[plan.priority] }}</span><dl><div><dt>기간</dt><dd><time>{{ plan.start_date }}</time> — <time>{{ plan.end_date }}</time></dd></div><div><dt>예상 시간</dt><dd class="time-value">{{ plan.estimated_minutes }}<span>분</span></dd></div><div><dt>최초 생성</dt><dd>{{ plan.created_at|seoul }}</dd></div><div><dt>마지막 저장</dt><dd>{{ plan.updated_at|seoul }}</dd></div><div><dt>계획 ID</dt><dd class="id">{{ plan.id }}</dd></div></dl></aside>
+</div>
+<section class="history-section" aria-labelledby="history-title"><div class="section-heading"><h2 class="section-title" id="history-title">수정 이력 <span class="count">{{ versions|length }}</span></h2><p class="muted">버전을 펼쳐 당시의 전체 내용을 확인하세요.</p></div>
+<ol class="timeline">{% for item in versions %}<li><details class="card history"><summary><span class="history-label"><strong>버전 {{ item.version }}</strong><span class="history-kind">{{ '최초 작성' if item.version == 1 else '수정' }}</span>{% if item.version == plan.version %}<span class="current-label">현재</span>{% endif %}</span><span class="history-time"><time datetime="{{ item.updated_at }}">{{ item.updated_at|seoul }}</time><span class="expand-label" aria-hidden="true"></span></span></summary><div class="history-content"><h3>{{ item.title }}</h3>{{ fields(item) }}</div></details></li>{% endfor %}</ol></section>
+{% endblock %}

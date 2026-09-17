@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}실행 기록{% endblock %}
+{% block body %}
+<div class="heading"><div><p class="eyebrow">DO · 실제로 한 일</p><h1>실행 기록</h1><p class="muted">할 일에 실제 수행한 내용과 시간을 남기세요.</p></div></div>
+{% if errors %}<div class="errors" role="alert"><strong>입력 내용을 확인해 주세요.</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+{% if not plans %}<div class="card empty"><h2>먼저 계획과 할 일을 만들어 주세요</h2><a class="button" href="{{ url_for('new_plan') }}">계획 만들기</a></div>{% else %}
+<form method="get" class="card"><label for="plan_id">계획 선택</label><select id="plan_id" name="plan_id">{% for p in plans %}<option value="{{ p.id }}" {% if plan and p.id == plan.id %}selected{% endif %}>{{ p.title }}</option>{% endfor %}</select><div class="form-actions"><button type="submit">선택한 계획 보기</button></div></form>
+{% if plan %}
+<div class="section-heading task-results"><h2>기록 추가</h2><p class="muted">한국 시간(Asia/Seoul)으로 입력하세요. 완료된 할 일에도 기록할 수 있습니다.</p></div>
+{% if tasks %}<form method="post" class="card form-card" data-execution-form>
+<input type="hidden" name="plan_id" value="{{ plan.id }}"><input type="hidden" name="request_id" value="{{ request_id }}">
+<div class="field"><label for="task_id">할 일 <span class="required">필수</span></label><select name="task_id" id="task_id" required><option value="">할 일을 선택하세요</option>{% for task in tasks %}<option value="{{ task.id }}" {% if values.task_id == task.id %}selected{% endif %}>{{ task.title }} · {{ task_statuses[task.status] }}</option>{% endfor %}</select></div>
+<div class="form-grid task-filter-grid"><div><label for="started_at">시작 시각 (한국 시간)</label><input type="datetime-local" step="1" name="started_at" id="started_at" value="{{ values.started_at }}" required></div><div><label for="ended_at">종료 시각 (한국 시간)</label><input type="datetime-local" step="1" name="ended_at" id="ended_at" value="{{ values.ended_at }}" required></div></div>
+<p class="field-help">실제 소요 시간은 서버에서 종료−시작으로 계산합니다. 분 단위, 소수 둘째 자리 반올림이며 같은 시각은 0분입니다.</p>
+<div class="field"><label for="content">수행 내용 <span class="required">필수</span></label><textarea name="content" id="content" rows="4" required>{{ values.content }}</textarea></div>
+<div class="field"><label for="blocked_reason">막힌 이유 <span class="optional">선택</span></label><textarea name="blocked_reason" id="blocked_reason" rows="3">{{ values.blocked_reason }}</textarea></div>
+<div class="form-actions"><p class="save-status" role="status">저장해도 예상 시간과 할 일 상태는 바뀌지 않습니다.</p><button type="submit">실행 기록 저장</button></div></form>
+{% else %}<div class="card empty"><h2>이 계획에 할 일이 없습니다</h2><a class="button" href="{{ url_for('task_new', plan_id=plan.id) }}">할 일 추가</a></div>{% endif %}
+<div class="section-heading task-results"><h2 class="section-title">저장된 실행 기록 <span class="count">{{ records|length }}</span></h2><p class="muted">시작 시각이 최근인 순서 · 한국 시간 표시</p></div>
+{% if records %}<div class="cards">{% for record in records %}<article class="card task-card"><h3>{{ record.task_title }}</h3><dl class="card-meta"><div><dt>시작</dt><dd>{{ record.started_at|seoul }}</dd></div><div><dt>종료</dt><dd>{{ record.ended_at|seoul }}</dd></div><div><dt>실제 소요 시간</dt><dd>{{ '%.2f'|format(record.actual_minutes) }}분</dd></div></dl><h2>수행 내용</h2><p class="prose">{{ record.content }}</p>{% if record.blocked_reason %}<div class="content-divider"></div><h2>막힌 이유</h2><p class="prose">{{ record.blocked_reason }}</p>{% endif %}<div class="form-actions"><a class="button secondary" href="/executions/{{ record.id }}/edit">수정</a></div></article>{% endfor %}</div>{% else %}<div class="card empty"><h2>아직 실행 기록이 없습니다</h2><p class="muted">실제로 수행한 내용만 위 양식에 입력해 주세요.</p></div>{% endif %}
+{% endif %}{% endif %}
+{% endblock %}

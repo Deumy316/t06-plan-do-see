@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}요청 확인{% endblock %}
+{% block body %}<div class="heading"><h1>요청을 확인해 주세요</h1></div><div class="errors" role="alert">{{ message }}</div><a class="button" href="{{ url_for('task_list') }}">할 일 목록으로</a>{% endblock %}

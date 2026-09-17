@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}할 일{% endblock %}
+{% block body %}
+<div class="heading"><div><p class="eyebrow">DO · 계획을 한 걸음씩</p><h1>할 일</h1><p class="muted">계획에 연결된 할 일을 관리하세요.</p></div>{% if plan %}<a class="button" href="{{ url_for('task_new', plan_id=plan.id) }}">+ 할 일 추가</a>{% endif %}</div>
+{% if not plans %}<div class="card empty"><h2>먼저 계획을 만들어 주세요</h2><p class="muted">할 일은 하나의 계획에 연결됩니다.</p><a class="button" href="{{ url_for('new_plan') }}">첫 계획 만들기</a></div>{% else %}
+<form method="get" class="card task-filters">
+<div class="field"><label for="plan_id">관리할 계획</label><select id="plan_id" name="plan_id">{% for p in plans %}<option value="{{ p.id }}" {% if p.id == plan.id %}selected{% endif %}>{{ p.title }}</option>{% endfor %}</select></div>
+<div class="field"><label for="q">제목·내용 검색</label><input type="search" id="q" name="q" value="{{ filters.q }}" placeholder="검색어를 입력하세요"></div>
+<div class="form-grid task-filter-grid">
+<div><label for="status">상태</label><select id="status" name="status"><option value="">전체</option>{% for key, label in task_statuses.items() %}<option value="{{ key }}" {% if filters.status == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div><label for="priority">우선순위</label><select id="priority" name="priority"><option value="">전체</option>{% for key, label in priorities.items() %}<option value="{{ key }}" {% if filters.priority == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div><label for="tag">태그</label><select id="tag" name="tag"><option value="">전체</option>{% if filters.tag and filters.tag not in tags %}<option selected value="{{ filters.tag }}">{{ filters.tag }}</option>{% endif %}{% for tag in tags %}<option value="{{ tag }}" {% if filters.tag == tag %}selected{% endif %}>{{ tag }}</option>{% endfor %}</select></div>
+<div><label for="sort">정렬</label><select id="sort" name="sort">{% for key, label in sorts.items() %}<option value="{{ key }}" {% if sort == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+</div><div class="form-actions"><a class="button secondary" href="{{ url_for('task_list', plan_id=plan.id) }}">조건 초기화</a><button type="submit">계획·조건 적용</button></div>
+</form>
+<div class="section-heading task-results"><h2 class="section-title">검색 결과 <span class="count">{{ tasks|length }}</span></h2><p class="muted">현재 정렬: {{ sorts[sort] }} · 동률은 ID순{% if sort == 'due' %} · 마감일 없음은 마지막{% endif %}</p></div>
+{% if tasks %}<div class="cards">{% for task in tasks %}
+<article class="card task-card" data-task-id="{{ task.id }}">
+<div class="card-top"><span class="badge {{ task.priority }}">우선순위 {{ priorities[task.priority] }}</span><strong>{{ task_statuses[task.status] }}</strong></div>
+<h3>{{ task.title }}</h3><p class="prose">{{ task.content or '내용 없음' }}</p>
+{% if task.tags %}<div class="task-tags">{% for tag in task.tags %}<span class="badge">{{ tag }}</span>{% endfor %}</div>{% endif %}
+<dl class="card-meta"><div><dt>마감일</dt><dd>{{ task.due_date or '없음' }}</dd></div><div><dt>예상 시간</dt><dd>{{ task.estimated_minutes }}분</dd></div><div><dt>생성 · 수정</dt><dd>{{ task.created_at|seoul }}<br>{{ task.updated_at|seoul }}</dd></div>{% if task.completed_at %}<div><dt>완료 시각</dt><dd>{{ task.completed_at|seoul }}</dd></div>{% endif %}</dl>
+<div class="task-actions"><form method="post" action="{{ url_for('task_state', task_id=task.id) }}"><input type="hidden" name="request_id" value="{{ task.request_id }}"><input type="hidden" name="version" value="{{ task.version }}"><input type="hidden" name="target_status" value="{{ 'active' if task.status == 'completed' else 'completed' }}"><button type="submit" class="{{ 'secondary' if task.status == 'completed' else '' }}">{{ '완료 취소' if task.status == 'completed' else '완료로 변경' }}</button></form><a class="button secondary" href="{{ url_for('task_edit', task_id=task.id) }}">수정</a><a class="button secondary" href="{{ url_for('task_delete', task_id=task.id) }}">삭제</a></div>
+</article>{% endfor %}</div>{% else %}<div class="card empty"><h2>표시할 할 일이 없습니다</h2><p class="muted">할 일을 추가하거나 검색 조건을 바꿔 보세요.</p><a class="button" href="{{ url_for('task_new', plan_id=plan.id) }}">+ 할 일 추가</a></div>{% endif %}
+{% endif %}
+{% endblock %}

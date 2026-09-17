@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}돌아보기{% endblock %}
+{% macro task_evidence(items) %}
+{% if items %}<ul class="review-evidence">{% for task in items %}<li data-evidence-task="{{ task.id }}"><h3><a href="{{ url_for('task_edit', task_id=task.id) }}">{{ task.title }}</a></h3><p>{{ task_statuses[task.status] }} · 마감일 {{ task.due_date or '없음' }} · 예상 {{ task.estimated_minutes }}분</p><p class="prose muted">{{ task.content or '내용 없음' }}</p><p class="id">할 일 ID: {{ task.id }}</p></li>{% endfor %}</ul>{% else %}<p class="muted">해당 할 일이 없습니다.</p>{% endif %}
+{% endmacro %}
+{% macro record_evidence(items) %}
+{% if items %}<ul class="review-evidence">{% for record in items %}<li data-evidence-record="{{ record.id }}"><h3>{{ record.task_title }}</h3><p>{{ record.started_at|seoul }} — {{ record.ended_at|seoul }}</p><p>실제 {{ record.actual_minutes|review_number }}분</p><p class="prose">{{ record.content }}</p>{% if record.blocked_reason.strip() %}<p class="prose">막힌 이유: {{ record.blocked_reason }}</p>{% endif %}<p class="id">실행 기록 ID: {{ record.id }} · 할 일 ID: {{ record.task_id }}</p></li>{% endfor %}</ul>{% else %}<p class="muted">해당 실행 기록이 없습니다.</p>{% endif %}
+{% endmacro %}
+{% block body %}
+<div class="heading"><div><p class="eyebrow">SEE · 계획과 실제</p><h1>돌아보기</h1><p class="muted">숫자를 누르면 계산에 사용한 기록을 확인할 수 있습니다.</p></div></div>
+{% if plans %}<form method="get" class="card"><label for="plan_id">돌아볼 계획</label><select id="plan_id" name="plan_id">{% for p in plans %}<option value="{{ p.id }}" {% if plan and p.id == plan.id %}selected{% endif %}>{{ p.title }}</option>{% endfor %}</select><div class="form-actions"><button type="submit">선택한 계획 보기</button></div></form>{% else %}<div class="card"><h2>아직 계획이 없습니다</h2><p class="muted">기록이 없으므로 모든 집계는 0입니다.</p><a class="back" href="{{ url_for('new_plan') }}">계획 만들기 →</a></div>{% endif %}
+<section class="section-heading task-results" aria-label="집계 기준"><h2>집계 기준</h2><p class="muted">{% if plan %}선택한 계획: {{ plan.title }} · {% endif %}삭제되지 않은 할 일 전체와 그 실행 기록을 계산합니다. 기간 필터는 없습니다.</p><p class="muted">한국 시간 기준 오늘: {{ today }} (Asia/Seoul) · 시간 단위: 분 · 예상은 현재 할 일 값, 실제는 저장된 실행 기록 값의 합계입니다.</p><p class="muted">지연은 미완료이면서 오늘 이전 마감인 할 일입니다. 막힘은 공백이 아닌 막힌 이유가 있는 할 일을 한 번만 셉니다. 완료·지연·막힘은 서로 겹칠 수 있습니다.</p></section>
+<div class="cards review-metrics">
+{% for key, label, unit in [('planned', '계획한 할 일', '개'), ('completed', '완료', '개'), ('overdue', '지연', '개'), ('blocked', '막힘', '개'), ('estimated', '예상 시간', '분'), ('actual', '실제 시간', '분'), ('difference', '차이', '분')] %}
+<details class="card history review-metric" id="metric-{{ key }}">
+<summary><span><strong>{{ label }}</strong><span class="review-value" data-metric="{{ key }}">{{ report.metrics[key]|review_number }} {{ unit }}</span></span><span class="expand-label" aria-hidden="true"></span></summary>
+<div class="history-content">
+{% if key == 'planned' %}<h3>계획한 할 일의 근거</h3>{{ task_evidence(report.tasks) }}
+{% elif key == 'completed' %}<h3>현재 완료 상태인 할 일</h3>{{ task_evidence(report.completed) }}
+{% elif key == 'overdue' %}<h3>오늘 이전 마감인 미완료 할 일</h3>{{ task_evidence(report.overdue) }}
+{% elif key == 'blocked' %}<h3>막힌 이유가 기록된 할 일 · 중복 제외</h3>{{ task_evidence(report.blocked) }}<h3>막힘을 확인한 실행 기록</h3>{{ record_evidence(report.blocked_records) }}
+{% elif key == 'estimated' %}<h3>현재 할 일별 예상 시간</h3>{{ task_evidence(report.tasks) }}
+{% elif key == 'actual' %}<h3>실행 기록별 실제 소요 시간</h3>{{ record_evidence(report.records) }}
+{% else %}<p>실제 {{ report.metrics.actual|review_number }}분 − 예상 {{ report.metrics.estimated|review_number }}분 = {{ report.metrics.difference|review_number }}분</p><h3>예상 시간 근거</h3>{{ task_evidence(report.tasks) }}<h3>실제 시간 근거</h3>{{ record_evidence(report.records) }}{% endif %}
+</div></details>
+{% endfor %}
+</div>
+{% if plan %}
+<section id="improvements" class="task-results" aria-labelledby="improvement-title">
+<h2 id="improvement-title">다음 계획에서 고칠 점</h2>
+{% if errors %}<div class="errors" role="alert"><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+<form method="post" class="card form-card"><input type="hidden" name="plan_id" value="{{ plan.id }}"><label for="improvement_content">개선점</label><textarea id="improvement_content" name="improvement_content" rows="4" required>{{ improvement_text }}</textarea><div class="form-actions"><p class="muted">선택한 계획의 개선점으로 저장합니다.</p><button type="submit">개선점 저장</button></div></form>
+<div class="section-heading task-results"><h2>저장된 개선점</h2></div>
+{% for improvement in improvements %}<article class="card task-results" data-improvement-id="{{ improvement.id }}"><p class="prose">{{ improvement.content }}</p><p class="muted">{{ improvement.created_at|seoul }} 저장</p><div class="form-actions"><a class="button" href="{{ url_for('new_plan', source_improvement=improvement.id) }}">이 내용으로 다음 계획 만들기</a></div>
+{% if improvement.next_plans %}<h3>연결된 다음 계획</h3><ul class="review-evidence">{% for next_plan in improvement.next_plans %}<li><a class="back" href="{{ url_for('detail', plan_id=next_plan.id) }}">{{ next_plan.title }} →</a></li>{% endfor %}</ul>{% endif %}
+</article>{% else %}<p class="muted">아직 저장한 개선점이 없습니다.</p>{% endfor %}
+</section>
+{% endif %}
+{% endblock %}
